@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -24,16 +25,19 @@ namespace Microsoft.DotNet.Docker.Tests
 
         [DotNetTheory]
         [MemberData(nameof(GetImageData))]
-        public async Task VerifyAppScenario(ProductImageData imageData)
+        public async Task VerifyFxDependentAppScenario(ProductImageData imageData)
         {
-            if (imageData.IsArm && imageData.OS == OS.Jammy)
-            {
-                OutputHelper.WriteLine(
-                    "Skipping test due to https://github.com/dotnet/runtime/issues/66310. Re-enable when fixed.");
-                return;
-            }
+            using ConsoleAppScenario testScenario =
+                new ConsoleAppScenario.FxDependent(imageData, DockerHelper, OutputHelper);
+            await testScenario.ExecuteAsync();
+        }
 
-            using ConsoleAppScenario testScenario = new(imageData, DockerHelper, OutputHelper);
+        [DotNetTheory]
+        [MemberData(nameof(GetImageData))]
+        public async Task VerifyTestProjectScenario(ProductImageData imageData)
+        {
+            using ConsoleAppScenario testScenario =
+                new ConsoleAppScenario.TestProject(imageData, DockerHelper, OutputHelper);
             await testScenario.ExecuteAsync();
         }
 

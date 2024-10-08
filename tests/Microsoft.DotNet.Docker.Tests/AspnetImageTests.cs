@@ -24,19 +24,9 @@ namespace Microsoft.DotNet.Docker.Tests
 
         [DotNetTheory]
         [MemberData(nameof(GetImageData))]
-        public async Task VerifyAppScenario(ProductImageData imageData)
+        public async Task VerifyFxDependentAppScenario(ProductImageData imageData)
         {
-            string[] unsupportedWindowsVersions = [ OS.ServerCoreLtsc2019, OS.NanoServer1809 ];
-            if (imageData.Version.Major == 9 && unsupportedWindowsVersions.Contains(imageData.OS))
-            {
-                OutputHelper.WriteLine(
-                    "Skipping test due to https://github.com/dotnet/msbuild/issues/9662. Re-enable when fixed.");
-                return;
-            }
-
-            using ProjectTemplateTestScenario scenario = imageData.ImageVariant.HasFlag(DotNetImageVariant.Composite)
-                ? new WebScenarioComposite(imageData, DockerHelper, OutputHelper)
-                : new WebScenario(imageData, DockerHelper, OutputHelper);
+            using WebScenario scenario = new WebScenario.FxDependent(imageData, DockerHelper, OutputHelper);
             await scenario.ExecuteAsync();
         }
 

@@ -1,7 +1,7 @@
 ARG REPO=mcr.microsoft.com/dotnet/monitor/base
 
 # Installer image
-FROM azurelinuxpreview.azurecr.io/public/azurelinux/base/core:3.0 AS installer
+FROM mcr.microsoft.com/azurelinux/base/core:3.0 AS installer
 
 RUN tdnf install -y \
         ca-certificates \
@@ -10,13 +10,13 @@ RUN tdnf install -y \
     && tdnf clean all
 
 # Retrieve .NET Monitor extensions
-RUN dotnet_monitor_extension_version=9.0.0-preview.6.24352.10 \
+RUN dotnet_monitor_extension_version=9.0.0-rc.2.24504.9 \
     && curl -fSL --output dotnet-monitor-egress-azureblobstorage.tar.gz https://dotnetcli.azureedge.net/dotnet/diagnostics/monitor/$dotnet_monitor_extension_version/dotnet-monitor-egress-azureblobstorage-$dotnet_monitor_extension_version-linux-x64.tar.gz \
-    && dotnet_monitor_extension_sha512='c1ec8ffb9558f9fbf4bdcd498806b11e196a17adc86e898ecf3844972589c834c008b08d49240945b074930ed3a22d2be373ed90074ae733059fd68e63d273b3' \
+    && dotnet_monitor_extension_sha512='03b535a031686637ea10d792b79014b5d32e0327e704d8eb5f2a308534cdfb47e7f1c506ad7d4e3322b6ffd7b3386d3838f399b590e548293c5e4d55a191fe88' \
     && echo "$dotnet_monitor_extension_sha512  dotnet-monitor-egress-azureblobstorage.tar.gz" | sha512sum -c - \
     \
     && curl -fSL --output dotnet-monitor-egress-s3storage.tar.gz https://dotnetcli.azureedge.net/dotnet/diagnostics/monitor/$dotnet_monitor_extension_version/dotnet-monitor-egress-s3storage-$dotnet_monitor_extension_version-linux-x64.tar.gz \
-    && dotnet_monitor_extension_sha512='50b522e87c75f517a15513aa5eb501415ee509f16071c42b9d0a8c675b57e024d4b2d3dd918134f1877c607d2bc2076629ba952a841a26ad6154520b4e912760' \
+    && dotnet_monitor_extension_sha512='2d4f745635683ee53b01b09cf39eabf9b16190145da9ba1adb930f066761b8791ef8b65aa6e94aa8a0cfc1997c9da2f7e0a05c3ea0e3ab81b01eb6dc6c068345' \
     && echo "$dotnet_monitor_extension_sha512  dotnet-monitor-egress-s3storage.tar.gz" | sha512sum -c - \
     \
     && mkdir -p /app \
@@ -27,6 +27,6 @@ RUN dotnet_monitor_extension_version=9.0.0-preview.6.24352.10 \
 
 
 # .NET Monitor image
-FROM $REPO:9.0.0-preview.6-amd64
+FROM $REPO:9.0.0-rc.2-amd64
 
 COPY --from=installer ["/app", "/app"]

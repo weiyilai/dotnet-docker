@@ -11,7 +11,7 @@
     set isCblMariner to defined(match(OS_VERSION, "^cbl-mariner\d+\.\d+$")) ^
     set isAzureLinux to isCblMariner || defined(match(OS_VERSION, "^azurelinux\d+\.\d+$")) ^
 
-    set baseUrl to VARIABLES[cat("base-url|", dotnetVersion, "|", VARIABLES["branch"])] ^
+    set baseUrl to VARIABLES[cat("dotnet|", dotnetVersion, "|base-url|", VARIABLES["branch"])] ^
     set isInternal to find(baseUrl, "msrc") >= 0 || find(baseUrl, "internal") >= 0 ^
     set baseImageRepo to when(isAlpine,
         cat(ARCH_VERSIONED, "/alpine"),
@@ -21,7 +21,7 @@
                 "ubuntu.azurecr.io/ubuntu",
                 when(isAzureLinux,
                     when(find(OS_VERSION_NUMBER, "3.0") >= 0, 
-                        "azurelinuxpreview.azurecr.io/public/azurelinux/base/core",
+                        "mcr.microsoft.com/azurelinux/base/core",
                         "mcr.microsoft.com/cbl-mariner/base/core"),
                     "<NOT-IMPLEMENTED>")))) ^
     set baseImageTag to when(isAlpine || isAzureLinux, OS_VERSION_NUMBER, OS_VERSION) ^

@@ -13,7 +13,7 @@ namespace Dotnet.Docker;
 /// <summary>
 /// Helper class for interacting with manifest files.
 /// </summary>
-public static class ManifestHelper
+public static partial class ManifestHelper
 {
     private const string VariableGroupName = "variable";
     private const string VariablePattern = $"\\$\\((?<{VariableGroupName}>[\\w:\\-.|]+)\\)";
@@ -27,20 +27,37 @@ public static class ManifestHelper
         ResolveVariableValue(GetBaseUrlVariableName(options.DockerfileVersion, options.SourceBranch, options.VersionSourceName), manifestVariables);
 
     /// <summary>
-    /// Consstructs the name of the base URL variable.
+    /// Constructs the name of the product version base URL variable.
     /// </summary>
     /// <param name="dockerfileVersion">Dockerfile version.</param>
     /// <param name="branch">Name of the branch.</param>
     public static string GetBaseUrlVariableName(string dockerfileVersion, string branch, string? versionSourceName)
     {
-        string version = versionSourceName switch
+        string product = versionSourceName switch
         {
-            string v when v.Contains("dotnet-monitor") => $"{dockerfileVersion}-monitor",
-            string v when v.Contains("aspire-dashboard") => $"{dockerfileVersion}-aspire-dashboard",
-            _ => dockerfileVersion,
+            string v when v.Contains("dotnet-monitor") => $"monitor",
+            string v when v.Contains("aspire-dashboard") => $"aspire-dashboard",
+            _ => "dotnet",
         };
 
-        return $"base-url|{version}|{branch}";
+        return $"{product}|{dockerfileVersion}|base-url|{branch}";
+    }
+
+    /// <summary>
+    /// Constructs the name of the shared base URL variable.
+    /// </summary>
+    /// <param name="releaseState">Release state of the product assets.</param>
+    /// <param name="branch">Name of the branch.</param>
+    public static string GetBaseUrlVariableName(ReleaseState releaseState, string branch)
+    {
+        string qualityString = releaseState switch
+        {
+            ReleaseState.Prerelease => "preview",
+            ReleaseState.Release => "maintenance",
+            _ => throw new NotSupportedException()
+        };
+
+        return $"base-url|public|{qualityString}|{branch}";
     }
 
     public static string GetVersionVariableName(VersionType versionType, string productName, string dockerfileVersion) =>
@@ -93,6 +110,14 @@ public static class ManifestHelper
         new($"\"{Regex.Escape(variableName)}\": \"{valuePattern}\"", options);
 
     /// <summary>
+    /// Determines if the given value matches the pattern manifest variable. Does not check if the variable is defined
+    /// in the manifest.
+    /// </summary>
+    /// <param name="value">The value to check.</param>
+    /// <returns>True if the value is a manifest variable, false otherwise.</returns>
+    public static bool IsManifestVariable(string value) => AnyVariableRegex().IsMatch(value);
+
+    /// <summary>
     /// Resolves the value of a variable, recursively resolving any variables referenced in the value.
     /// </summary>
     /// <param name="value">Variable value to be resolved.</param>
@@ -109,5 +134,7 @@ public static class ManifestHelper
 
         return value;
     }
+
+    [GeneratedRegex(@"^\$\(.*\)$")]
+    private static partial Regex AnyVariableRegex();
 }
-#nullable disable

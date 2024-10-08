@@ -68,9 +68,9 @@ namespace Microsoft.DotNet.Docker.Tests
         /// this helper image stores the entire root of the distroless filesystem at the specified destination path within
         /// the built container image.
         /// </remarks>
-        public string BuildDistrolessHelper(DotNetImageRepo imageRepo, ProductImageData imageData, string rootDestination)
+        public string BuildDistrolessHelper(DotNetImageRepo imageRepo, ProductImageData imageData, string copyDestination, string copyOrigin = "/")
         {
-            string dockerfile = Path.Combine(TestArtifactsDir, "Dockerfile.distroless");
+            string dockerfile = Path.Combine(TestArtifactsDir, "Dockerfile.copy");
             string distrolessImageTag = imageData.GetImage(imageRepo, this);
 
             // Use the runtime-deps image as the target of the filesyste copy.
@@ -100,15 +100,18 @@ namespace Microsoft.DotNet.Docker.Tests
                 platform: imageData.Platform,
                 buildArgs:
                 [
-                    $"distroless_image={distrolessImageTag}",
+                    $"copy_image={distrolessImageTag}",
                     $"base_image={baseImageTag}",
-                    $"root_destination={rootDestination}"
+                    $"copy_origin={copyOrigin}",
+                    $"copy_destination={copyDestination}"
                 ]);
 
             return tag;
         }
 
         public static bool ContainerExists(string name) => ResourceExists("container", $"-f \"name={name}\"");
+
+        public static bool ContainerIsRunning(string name) => Execute($"inspect --format=\"{{{{.State.Running}}}}\" {name}") == "true";
 
         public void Copy(string src, string dest) => ExecuteWithLogging($"cp {src} {dest}");
 
@@ -259,6 +262,16 @@ namespace Microsoft.DotNet.Docker.Tests
 
         public void Pull(string image) => ExecuteWithLogging($"pull {image}", autoRetry: true);
 
+        public void PullExternalImage(string image)
+        {
+            if (!string.IsNullOrEmpty(Config.CacheRegistry))
+            {
+                image = $"{Config.CacheRegistry}/{image}";
+            }
+
+            Pull(image);
+        }
+
         public string GetHistory(string image) =>
             ExecuteWithLogging($"history --no-trunc --format \"{{{{ .CreatedBy }}}}\" {image}");
 
@@ -278,20 +291,22 @@ namespace Microsoft.DotNet.Docker.Tests
             string runAsUser = null,
             bool skipAutoCleanup = false,
             bool useMountedDockerSocket = false,
-            bool silenceOutput = false)
+            bool silenceOutput = false,
+            bool tty = true)
         {
             string cleanupArg = skipAutoCleanup ? string.Empty : " --rm";
-            string detachArg = detach ? " -d -t" : string.Empty;
+            string detachArg = detach ? " -d" : string.Empty;
+            string ttyArg = detach && tty ? " -t" : string.Empty;
             string userArg = runAsUser != null ? $" -u {runAsUser}" : string.Empty;
             string workdirArg = workdir == null ? string.Empty : $" -w {workdir}";
             string mountedDockerSocketArg = useMountedDockerSocket ? " -v /var/run/docker.sock:/var/run/docker.sock" : string.Empty;
             if (silenceOutput)
             {
                 return Execute(
-                    $"run --name {name}{cleanupArg}{workdirArg}{userArg}{detachArg}{mountedDockerSocketArg} {optionalRunArgs} {image} {command}");
+                    $"run --name {name}{cleanupArg}{workdirArg}{userArg}{detachArg}{ttyArg}{mountedDockerSocketArg} {optionalRunArgs} {image} {command}");
             }
             return ExecuteWithLogging(
-                $"run --name {name}{cleanupArg}{workdirArg}{userArg}{detachArg}{mountedDockerSocketArg} {optionalRunArgs} {image} {command}");
+                $"run --name {name}{cleanupArg}{workdirArg}{userArg}{detachArg}{ttyArg}{mountedDockerSocketArg} {optionalRunArgs} {image} {command}");
         }
 
         /// <summary>

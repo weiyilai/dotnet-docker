@@ -20,11 +20,9 @@ The instructions volume mount certificates into containers. You can add certific
 
 ## Running pre-built Container Images with HTTPS
 
-Use the following instructions, for your operating system configuration.
+Use the following instructions for your operating system configuration.
 
-You need the [.NET 6 SDK or newer](https://dotnet.microsoft.com/download) for some of the instructions.
-
-### Windows using Linux containers
+### Linux containers on Windows host
 
 Generate cert and configure local machine:
 
@@ -49,7 +47,13 @@ docker run --rm -it -p 8001:8001 -e ASPNETCORE_HTTPS_PORTS=8001 -e ASPNETCORE_Ke
 > [!NOTE]
 > The password must match the password used for the certificate.
 
-### macOS or Linux
+### Linux containers on macOS or Linux host
+
+Create a certificate directory with appropriate permissions:
+
+```console
+mkdir -p -m 700 ${HOME}/.aspnet/https
+```
 
 Generate cert and configure local machine:
 
@@ -59,9 +63,7 @@ dotnet dev-certs https --trust
 ```
 
 > [!NOTE]
->
-> - `dotnet dev-certs https --trust` is only supported on macOS and Windows. You need to trust certs on Linux in the way that is supported by your distro. It is likely that you need to trust the certificate in your browser.
-> - `<CREDENTIAL_PLACEHOLDER>` is used as a stand-in for a password of your own choosing.
+> `<CREDENTIAL_PLACEHOLDER>` is used as a stand-in for a password of your own choosing.
 
 Run the container image with ASP.NET Core configured for HTTPS:
 
@@ -73,7 +75,7 @@ docker run --rm -it -p 8001:8001 -e ASPNETCORE_HTTPS_PORTS=8001 -e ASPNETCORE_Ke
 > [!NOTE]
 > The password must match the password used for the certificate.
 
-### Windows using Windows containers
+### Windows containers on Windows host
 
 Generate cert and configure local machine:
 

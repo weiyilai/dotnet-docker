@@ -13,9 +13,9 @@ namespace Microsoft.DotNet.Docker.Tests
     {
         private const string VariableGroupName = "variable";
         private const string VariablePattern = $"\\$\\((?<{VariableGroupName}>[\\w:\\-.|]+)\\)";
-        private static Lazy<JObject> Manifest { get; } = new Lazy<JObject>(() => LoadManifest("manifest.json"));
         private static Lazy<JObject> ManifestVersions { get; } = new Lazy<JObject>(() => LoadManifest("manifest.versions.json"));
 
+        public static Lazy<JObject> Manifest { get; } = new Lazy<JObject>(() => LoadManifest("manifest.json"));
         public static string SourceRepoRoot { get; } = Environment.GetEnvironmentVariable("SOURCE_REPO_ROOT") ?? string.Empty;
         public static bool IsHttpVerificationDisabled { get; } =
             Environment.GetEnvironmentVariable("DISABLE_HTTP_VERIFICATION") != null;
@@ -26,6 +26,8 @@ namespace Microsoft.DotNet.Docker.Tests
         public static string RepoPrefix { get; } = Environment.GetEnvironmentVariable("REPO_PREFIX") ?? string.Empty;
         public static string Registry { get; } =
             Environment.GetEnvironmentVariable("REGISTRY") ?? (string)Manifest.Value["registry"];
+        public static string CacheRegistry { get; } =
+            Environment.GetEnvironmentVariable("CACHE_REGISTRY") ?? string.Empty;
         public static string[] OsNames { get; } =
             (Environment.GetEnvironmentVariable("IMAGE_OS_NAMES") ?? string.Empty).Split(",", StringSplitOptions.RemoveEmptyEntries);
         public static string SourceBranch { get; } =
@@ -77,7 +79,7 @@ namespace Microsoft.DotNet.Docker.Tests
         }
 
         public static string GetBaseUrl(string dotnetVersion) =>
-            GetVariableValue($"base-url|{dotnetVersion}|{Config.SourceBranch}", (JObject)ManifestVersions.Value["variables"]);
+            GetVariableValue($"dotnet|{dotnetVersion}|base-url|{Config.SourceBranch}", (JObject)ManifestVersions.Value["variables"]);
 
         public static string GetBuildVersion(DotNetImageRepo imageRepo, string dotnetVersion)
         {
